@@ -1,144 +1,100 @@
 <div align="center">
 
-# Saturn Technology Project
+# Saturn
 
-### Infrastructure for the Agentic Enterprise
+### Tools for secure, accountable AI
 
-The control layer that lets AI agents **run, connect, act, and operate safely in production**.
-
-[Website](https://saturn-core.com) · [Saturn App](https://github.com/Saturn-Technology-Project/Saturn-App) · [Sponsor](https://github.com/sponsors/Saturn-Technology-Project)
+[Website](https://saturn-core.com) · [Saturn MCP](https://saturn-core.com/mcp) · [Saturn App](https://saturn-core.com/app) · [Whitepaper](https://saturn-core.com/trust) · [Sponsor](https://github.com/sponsors/Saturn-Technology-Project)
 
 </div>
 
 ---
 
-AI agents are getting access to real tools, real data, and real accounts. The layer between an agent and those systems is usually an afterthought: long-lived credentials in the prompt, no clear permissions, and no record of what happened.
+An AI system is safe to rely on only when you can say **what it is allowed to do**, and **what it actually does**.
 
-Saturn is that missing layer. We don't build another agent. We build what agents need to work inside real organizations: **runtime, identity, permissions, policy, approval, and audit**.
+Saturn works on both sides of that problem with two free products:
 
-> The agent decides **what it wants to do**.
-> Saturn decides **who is acting, what is allowed, whether a human must approve, and how the action is executed and recorded**.
-
----
-
-## What We Build
-
-| Component | What it does | Status |
+| | For | What it does |
 | --- | --- | --- |
-| **Saturn App** | Local app to create agents, connect models and MCP servers, configure RAG, and run agents on your machine. | Available |
-| **Saturn MCP** | One MCP endpoint for agents. Routes requests to mapped, authorized tools instead of direct connections to every server. | In development |
-| **Policy Engine** | Defines what an agent can access and execute, under which conditions, and when a human must approve. | In development |
-| **Agent Identity & Access** | Identities, scoped credentials, and authorization for agents acting for a human or on their own. | In development |
-| **Audit & Observability** | Traces every tool call, policy decision, approval, and result. | In development |
-| **Agent Runtime** | Portable execution environment: state, secrets, tool execution, approvals. Runs locally, in containers, or on Kubernetes. | In development |
-| **MCP Marketplace** | Discover MCP capabilities and connect them to Saturn without manual configuration. | Planned |
-| **Connectors SDK** | Expose internal APIs, databases, and services to agents through Saturn MCP. | Planned |
-| **Saturn Cloud** | Managed runtime, team management, policies, and audit at scale. | Planned |
-| **Agent Wallet** | Lets agents make payments under spending limits, allowlists, and approval rules, without holding private keys. | Exploring |
+| **[Saturn MCP](https://saturn-core.com/mcp)** | Teams running AI agents | An MCP gateway that puts every tool call under policy, human approval, and audit. |
+| **[Saturn App](https://github.com/Saturn-Technology-Project/Saturn-App)** | People studying models | An open-source desktop workbench for AI research: run experiments, read every sample, look inside the model. |
+
+Both are free, with every feature on every account. Saturn App is open source under the Apache License 2.0.
 
 ---
 
-## Architecture
+## Saturn MCP
+
+**The MCP gateway that decides what your agents may do.**
+
+Agents talk to Saturn instead of your MCP servers. Saturn exposes only the tools you choose, checks every call against policy down to its arguments, pauses sensitive calls for a person, and records every decision. No SDK and no agent code changes: it works at the protocol level.
 
 ```text
-                    +-------------------+
-                    |     AI Agents     |
-                    +---------+---------+
-                              | MCP
-                    +---------v---------+
-                    |    Saturn MCP     |
-                    +---------+---------+
-                              |
-          +-------------------+-------------------+
-          |                   |                   |
-   +------v------+     +------v------+     +------v------+
-   |  Identity   |     |   Policy    |     |    Audit    |
-   |  & Access   |     |   Engine    |     | & Telemetry |
-   +------+------+     +------+------+     +------+------+
-          +-------------------+-------------------+
-                              |
-                    +---------v---------+
-                    | Capability Mapping|
-                    | tools · resources |
-                    +---------+---------+
-                              |
-                    +---------v---------+
-                    |   Agent Runtime   |
-                    | execution·secrets |
-                    | approval · state  |
-                    +---------+---------+
-                              |
-          +-------------------+-------------------+
-          |                   |                   |
-   +------v------+     +------v------+     +------v------+
-   | MCP Servers |     | Enterprise  |     | APIs and    |
-   |             |     | Systems     |     | Services    |
-   +-------------+     +-------------+     +-------------+
+policy    Payments  v3  production
+
+rule      payments.transfer
+when      amount > 1000 AND currency == "USD"
+decision  approval_required
+
+rule      db.drop_table
+when      true
+decision  deny
 ```
 
-### Two authority models
+- **One endpoint** for every agent and every MCP server, over standard MCP on HTTP
+- **Tool sets** per agent, across servers; tools outside the set do not exist for that agent
+- **Argument-level policies**, ordered and versioned; every call records the policy and rule that decided it
+- **Approvals** by one reviewer or a group quorum, with the full call context
+- **Credential vault** sealed with ML-KEM-1024 and AES-256-GCM; agents never see upstream secrets
+- **Audit trail** with zero-access encrypted payloads, plus HMAC-signed webhooks
+- **OAuth 2.1 with PKCE** for every agent, and role-based access in the console
 
-- **Human-centric agents** act on behalf of a person, using delegated authority and that person's permissions.
-- **Agent-centric agents** have their own identity, credentials, limits, and audit trail.
+Works with Claude, ChatGPT, Cursor, Gemini, LM Studio, Saturn App, or any MCP client.
 
-This lets Saturn serve both personal assistants and autonomous enterprise agents.
-
----
-
-## Policy, in practice
-
-Policies apply at every level: organization → user → agent → MCP server → tool → resource → parameters.
-
-```text
-Coding Agent · GitHub
-  repo.read       ALLOW
-  repo.search     ALLOW
-  issue.create    ALLOW
-  workflow.run    REQUIRE APPROVAL
-  repo.delete     DENY
-```
-
-Decisions can depend on identity, environment, time, risk, and usage limits. The default is least privilege.
-
-Every action that passes through Saturn produces an audit event: who initiated it, which tool and resource, the policy decision, any approval, the result, latency, and cost. Payload logging is configurable separately for privacy and data-residency requirements.
+[Get started](https://dashboard.saturn-core.com) · [Learn more](https://saturn-core.com/mcp)
 
 ---
 
-## Design Principles
+## Saturn App
 
-1. **Agents don't hold privileged credentials.** Secrets stay out of the model context.
-2. **Every action is governed** by identity, policy, context, and approval.
-3. **Capabilities are composable** through standard interfaces, not one-off integrations.
-4. **The runtime is portable.** Run it locally, on your own infrastructure, or on Saturn Cloud.
-5. **Execution is observable**, with traceable records and deterministic authorization.
-6. **Humans stay in control** of high-impact actions.
+**A workbench for AI research, on your own computer.**
 
----
+Saturn App is organized around your questions, models, experiments, and findings rather than around chats. Write the code yourself, run experiments locally or on your own SSH host, and decide how much the assistant may do.
 
-## Research
+- **Experiments** that freeze into versions and only compare runs measured the same way
+- **Samples** across every model that saw them, with your label beside the scorer's
+- **Inspect**: activations at every layer, activation patching against a random control, and sparse-autoencoder features
+- **Assistant modes**: Ask, Approve, Auto, or Agent; verdicts, labels, and merges stay yours
+- **Plain-file records** in `.saturn/research`, next to your code, ready to diff and commit
+- **Bring your own models**: API keys, your Claude or ChatGPT plan, or offline models through LM Studio
 
-Saturn is growing into an independent AI lab. Alongside the infrastructure, we work on:
+macOS 12+ on Apple silicon. Interface in English and Traditional Chinese. Currently a preview release.
 
-- **Interpretability**: activation-steering experiments on small open models
-- **Papers**: publishing what we learn, including negative results
-- **Models**: training our own models and releasing the weights
+[Download](https://github.com/Saturn-Technology-Project/Saturn-App/releases) · [Source](https://github.com/Saturn-Technology-Project/Saturn-App) · [Learn more](https://saturn-core.com/app)
 
 ---
 
-## Open Source
+## How we build
 
-Core infrastructure, including the runtime, is developed in the open so it can be inspected and deployed without Saturn Cloud. Commercial offerings focus on managed infrastructure, centralized governance, and enterprise security.
+- **Free.** Both products cost nothing, with every feature on every account.
+- **Open.** Saturn App is open source, and every release carries a checksum and signed build provenance.
+- **Verifiable.** The [system whitepaper](https://saturn-core.com/trust) explains how keys, payloads, and credentials are protected, and what Saturn cannot see.
+- **Honest about limits.** The gateway processes plaintext in flight. The App's modes are a workflow constraint, not a security boundary.
+
+---
 
 ## Support Saturn
 
-Saturn is independent and self-funded. If this work matters to you, [sponsoring us on GitHub](https://github.com/sponsors/Saturn-Technology-Project) directly funds compute for research, infrastructure costs, and time spent maintaining the open-source projects.
+Saturn is built in the open and paid for by the people who use it. If Saturn helps you, [sponsoring it on GitHub](https://github.com/sponsors/Saturn-Technology-Project), monthly or one-time, keeps both products free.
+
+Contributions are welcome too: star the repository, open an issue, or send a pull request to [Saturn App](https://github.com/Saturn-Technology-Project/Saturn-App).
 
 ---
 
 <div align="center">
 
-**AI agents are becoming a new class of software worker.<br>Saturn builds the infrastructure they need to operate safely.**
+**AI you can control, and understand.**
 
-[saturn-core.com](https://saturn-core.com)
+© 2026 Saturn Project by Rick Weng
 
 </div>
