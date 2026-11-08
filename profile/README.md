@@ -4,497 +4,141 @@
 
 ### Infrastructure for the Agentic Enterprise
 
-Building the infrastructure layer that enables AI Agents to **run, connect, act, and operate safely in production**.
+The control layer that lets AI agents **run, connect, act, and operate safely in production**.
 
-[What We Build](#what-we-build) · [Architecture](#architecture) · [Projects](#projects) · [Open Source](#open-source)
+[Website](https://saturn-core.com) · [Saturn App](https://github.com/Saturn-Technology-Project/Saturn-App) · [Sponsor](https://github.com/sponsors/Saturn-Technology-Project)
 
 </div>
 
-Saturn Technology Project builds the infrastructure behind enterprise AI Agents.
+---
 
-Our focus is not another Agent application. We build the systems that give Agents **runtime environments, identity, capabilities, permissions, policies, execution controls, and auditability**.
+AI agents are getting access to real tools, real data, and real accounts. The layer between an agent and those systems is usually an afterthought: long-lived credentials in the prompt, no clear permissions, and no record of what happened.
+
+Saturn is that missing layer. We don't build another agent. We build what agents need to work inside real organizations: **runtime, identity, permissions, policy, approval, and audit**.
+
+> The agent decides **what it wants to do**.
+> Saturn decides **who is acting, what is allowed, whether a human must approve, and how the action is executed and recorded**.
 
 ---
 
 ## What We Build
 
-| Area | Description |
-| --- | --- |
-| **Agent Runtime** | A portable execution environment for autonomous and human-supervised AI Agents. |
-| **Saturn MCP** | A unified MCP interface through which Agents access external tools, services, data, and enterprise capabilities. |
-| **MCP Infrastructure** | Infrastructure for connecting, routing, mapping, securing, and governing MCP servers and enterprise tools. |
-| **Agent Identity & Access** | Identity, authentication, authorization, and scoped access controls for Agents operating across enterprise environments. |
-| **Policy Engine** | Define what an Agent can access, what it can execute, under which conditions, and when human approval is required. |
-| **Agent Audit & Observability** | Trace Agent actions, tool calls, policy decisions, approvals, results, and operational activity. |
-| **Agent Wallet** | Secure financial infrastructure that allows Agents to authorize and execute financial transactions under programmable policies. |
-| **Enterprise Connectors** | Standardized interfaces for exposing enterprise systems, APIs, databases, and proprietary capabilities to Agents. |
-| **Agent Cloud** | Managed infrastructure for deploying, operating, and governing Saturn Agents and Runtimes at scale. |
+| Component | What it does | Status |
+| --- | --- | --- |
+| **Saturn App** | Local app to create agents, connect models and MCP servers, configure RAG, and run agents on your machine. | Available |
+| **Saturn MCP** | One MCP endpoint for agents. Routes requests to mapped, authorized tools instead of direct connections to every server. | In development |
+| **Policy Engine** | Defines what an agent can access and execute, under which conditions, and when a human must approve. | In development |
+| **Agent Identity & Access** | Identities, scoped credentials, and authorization for agents acting for a human or on their own. | In development |
+| **Audit & Observability** | Traces every tool call, policy decision, approval, and result. | In development |
+| **Agent Runtime** | Portable execution environment: state, secrets, tool execution, approvals. Runs locally, in containers, or on Kubernetes. | In development |
+| **MCP Marketplace** | Discover MCP capabilities and connect them to Saturn without manual configuration. | Planned |
+| **Connectors SDK** | Expose internal APIs, databases, and services to agents through Saturn MCP. | Planned |
+| **Saturn Cloud** | Managed runtime, team management, policies, and audit at scale. | Planned |
+| **Agent Wallet** | Lets agents make payments under spending limits, allowlists, and approval rules, without holding private keys. | Exploring |
 
 ---
 
 ## Architecture
 
-Saturn separates **reasoning, identity, capability access, policy, and execution**.
-
 ```text
-                         +----------------------+
-                         |      AI Agents       |
-                         |                      |
-                         | Human-centric        |
-                         | Agent-centric        |
-                         +----------+-----------+
-                                    |
-                                    | MCP
-                                    v
-                         +----------------------+
-                         |     Saturn MCP       |
-                         |                      |
-                         | Unified Agent        |
-                         | Capability Interface |
-                         +----------+-----------+
-                                    |
-                    +---------------+---------------+
-                    |               |               |
-             +------v------+ +------v------+ +------v------+
-             |  Identity   | |   Policy    | |    Audit    |
-             | & Access    | |   Engine    | | & Telemetry |
-             +------+------+ +------+------+ +------+------+
-                    |               |               |
-                    +---------------+---------------+
-                                    |
-                         +----------v-----------+
-                         | Capability Mapping  |
-                         |                      |
-                         | Tools · Resources   |
-                         | Permissions · Rules  |
-                         +----------+-----------+
-                                    |
-                 +------------------+------------------+
-                 |                  |                  |
-          +------v------+    +------v------+    +------v------+
-          | MCP Servers |    | Enterprise  |    |   APIs /    |
-          |             |    | Systems     |    |   Services  |
-          +------+------+    +------+------+    +------+------+
-                 |                  |                  |
-                 +------------------+------------------+
-                                    |
-                         +----------v-----------+
-                         |    Agent Runtime     |
-                         |                      |
-                         | Execution · Secrets  |
-                         | Approval · State     |
-                         +----------+-----------+
-                                    |
-                         +----------v-----------+
-                         | Enterprise Systems   |
-                         | Data · Apps · APIs   |
-                         +----------------------+
+                    +-------------------+
+                    |     AI Agents     |
+                    +---------+---------+
+                              | MCP
+                    +---------v---------+
+                    |    Saturn MCP     |
+                    +---------+---------+
+                              |
+          +-------------------+-------------------+
+          |                   |                   |
+   +------v------+     +------v------+     +------v------+
+   |  Identity   |     |   Policy    |     |    Audit    |
+   |  & Access   |     |   Engine    |     | & Telemetry |
+   +------+------+     +------+------+     +------+------+
+          +-------------------+-------------------+
+                              |
+                    +---------v---------+
+                    | Capability Mapping|
+                    | tools · resources |
+                    +---------+---------+
+                              |
+                    +---------v---------+
+                    |   Agent Runtime   |
+                    | execution·secrets |
+                    | approval · state  |
+                    +---------+---------+
+                              |
+          +-------------------+-------------------+
+          |                   |                   |
+   +------v------+     +------v------+     +------v------+
+   | MCP Servers |     | Enterprise  |     | APIs and    |
+   |             |     | Systems     |     | Services    |
+   +-------------+     +-------------+     +-------------+
 ```
 
-Saturn provides the control layer between an Agent and the systems it can access.
+### Two authority models
 
-The Agent determines **what it wants to do**.
+- **Human-centric agents** act on behalf of a person, using delegated authority and that person's permissions.
+- **Agent-centric agents** have their own identity, credentials, limits, and audit trail.
 
-Saturn determines **who is acting, what they are allowed to do, whether approval is required, and how the action is executed and recorded**.
+This lets Saturn serve both personal assistants and autonomous enterprise agents.
 
 ---
 
-## Agent Identity
+## Policy, in practice
 
-Saturn supports two fundamental authority models.
-
-### Human-centric Agents
-
-An Agent acts on behalf of a human.
+Policies apply at every level: organization → user → agent → MCP server → tool → resource → parameters.
 
 ```text
-Human
-  |
-  v
-Agent
-  |
-  v
-Saturn MCP
-  |
-  v
-Enterprise System
-```
-
-The Agent operates using authority delegated by the human and remains subject to that user's policies and permissions.
-
-### Agent-centric Agents
-
-An Agent operates as an independent identity.
-
-```text
-Agent Identity
-      |
-      v
-Saturn MCP
-      |
-      v
-Enterprise System
-```
-
-The Agent receives its own identity, credentials, permissions, policies, limits, and audit trail.
-
-This distinction allows Saturn to support both personal AI assistants and autonomous enterprise Agents.
-
----
-
-## Saturn MCP
-
-Saturn MCP is the unified MCP interface exposed to Agents.
-
-Instead of requiring every Agent to connect directly to individual MCP servers, Agents can connect to Saturn and consume capabilities that have been explicitly mapped and authorized.
-
-```text
-             Agent
-               |
-               | MCP
-               v
-          Saturn MCP
-               |
-        +------+------+
-        |             |
-     Mapping        Policy
-        |             |
-        +------+------+
-               |
-        +------+------+
-        |             |
-   GitHub MCP     Slack MCP
-        |             |
-        +------+------+
-               |
-        Enterprise Systems
-```
-
-Saturn can:
-
-- Connect to external MCP servers
-- Connect to local and self-hosted MCP servers
-- Map individual tools and resources
-- Apply permissions and policies
-- Route MCP requests
-- Require human approval
-- Record execution activity
-- Apply rate limits and quotas
-- Protect credentials and secrets
-- Provide a unified interface to Agents
-
-The goal is to make external capabilities composable without requiring every Agent to understand every underlying integration.
-
----
-
-## MCP Marketplace
-
-Saturn includes an MCP discovery and distribution layer.
-
-The Marketplace allows users and organizations to discover capabilities and connect them to Saturn without manually configuring every MCP server.
-
-```text
-Discover
-   ↓
-Connect
-   ↓
-Configure
-   ↓
-Map
-   ↓
-Authorize
-   ↓
-Expose through Saturn MCP
-   ↓
-Agent
-```
-
-The Marketplace is designed as a distribution layer for the MCP ecosystem.
-
-The control plane remains responsible for identity, permissions, policy, security, and execution.
-
----
-
-## Policy & Authorization
-
-Saturn policies can operate at multiple levels:
-
-```text
-Organization
-    ↓
-User
-    ↓
-Agent
-    ↓
-MCP Server
-    ↓
-Tool
-    ↓
-Resource
-    ↓
-Parameters
-    ↓
-Action
-```
-
-Example:
-
-```text
-Coding Agent
-
-GitHub
+Coding Agent · GitHub
   repo.read       ALLOW
   repo.search     ALLOW
-  issue.read      ALLOW
   issue.create    ALLOW
   workflow.run    REQUIRE APPROVAL
   repo.delete     DENY
 ```
 
-Policies can consider:
+Decisions can depend on identity, environment, time, risk, and usage limits. The default is least privilege.
 
-- Agent identity
-- Human identity
-- Organization
-- MCP server
-- Tool
-- Resource
-- Parameters
-- Environment
-- Time
-- Risk
-- Approval requirements
-- Usage limits
-
-Saturn is designed around least-privilege access and explicit authorization rather than unrestricted Agent credentials.
-
----
-
-## Audit & Observability
-
-Every action passing through Saturn can become an auditable Agent event.
-
-```text
-Human
-  ↓
-Agent
-  ↓
-Intent
-  ↓
-Policy Decision
-  ↓
-Approval
-  ↓
-Tool Call
-  ↓
-External System
-  ↓
-Result
-```
-
-Audit records can capture:
-
-- Who or what initiated the action
-- Agent identity
-- Human identity, when applicable
-- MCP server
-- Tool
-- Resource
-- Policy decision
-- Approval
-- Execution status
-- Timestamp
-- Latency
-- Usage and cost
-- Result metadata
-
-Saturn is designed to provide a complete execution trail without requiring enterprise systems to expose their credentials directly to the Agent.
-
-Payload logging can be controlled independently to support privacy, security, retention, and data-residency requirements.
-
----
-
-## Agent Runtime
-
-The Saturn Runtime provides the execution environment for Agents.
-
-It is designed to be portable and deployable across:
-
-- Local machines
-- Saturn Desktop
-- Saturn Cloud
-- Customer infrastructure
-- Containers
-- Kubernetes
-- Enterprise environments
-
-The Runtime is intentionally separated from the control plane.
-
-```text
-Runtime
-  |
-  +-- Agent Execution
-  +-- State
-  +-- Secrets
-  +-- Tool Execution
-  +-- Approval
-  +-- Local Diagnostics
-```
-
-The Runtime can operate independently while integrating with Saturn's control plane when centralized management is required.
-
----
-
-## Saturn App & Saturn Cloud
-
-Saturn App provides the local developer and Agent experience.
-
-Users can:
-
-- Create Agents
-- Connect models
-- Connect MCPs
-- Configure RAG
-- Run Agents locally
-- Manage local Runtime
-- Develop and test Agent workflows
-
-Saturn Cloud provides the managed infrastructure around the Runtime.
-
-```text
-Saturn App
-    |
-    | Deploy / Sync / Manage
-    v
-Saturn Cloud
-    |
-    +-- Cloud Runtime
-    +-- Agent Management
-    +-- MCP Management
-    +-- Policies
-    +-- Identity
-    +-- Audit
-    +-- Teams
-    +-- Usage
-```
-
-The underlying Runtime remains portable.
-
-The goal is simple:
-
-> **Build locally. Deploy anywhere. Manage with Saturn.**
-
----
-
-## Agent Wallet
-
-Saturn explores financial infrastructure for autonomous Agents.
-
-Agent Wallet provides programmable financial execution capabilities under explicit policies.
-
-Potential controls include:
-
-- Agent identity
-- Spending limits
-- Transaction policies
-- Asset restrictions
-- Human approval
-- Allowlisted destinations
-- Transaction audit
-- Emergency controls
-
-The goal is to allow Agents to interact with financial systems without giving models unrestricted access to private keys or financial credentials.
-
----
-
-## Enterprise Connectors
-
-Saturn provides standardized interfaces for enterprise capabilities.
-
-Connectors can expose:
-
-- APIs
-- Databases
-- Internal applications
-- SaaS platforms
-- Operational systems
-- Proprietary enterprise services
-
-Connectors can be deployed and operated by the customer while remaining accessible to Agents through Saturn MCP.
-
-This allows enterprises to bring their own infrastructure rather than replacing existing systems.
-
----
-
-## Projects
-
-| Project | Description |
-| --- | --- |
-| **Saturn Runtime** | Portable execution environment for AI Agents. |
-| **Saturn MCP** | Unified MCP interface for Agent capabilities. |
-| **MCP Infrastructure** | Routing, connections, mapping, and MCP infrastructure. |
-| **MCP Marketplace** | Discovery and distribution layer for MCP capabilities. |
-| **Policy Engine** | Authorization and execution policy infrastructure. |
-| **Agent Identity** | Identity and access infrastructure for Agents. |
-| **Audit** | Agent execution tracing, audit, and observability. |
-| **Agent Wallet** | Programmable financial execution infrastructure. |
-| **Connectors SDK** | Framework for exposing enterprise systems to Agents. |
-| **Saturn Cloud** | Managed infrastructure for deploying and operating Saturn. |
+Every action that passes through Saturn produces an audit event: who initiated it, which tool and resource, the policy decision, any approval, the result, latency, and cost. Payload logging is configurable separately for privacy and data-residency requirements.
 
 ---
 
 ## Design Principles
 
-### Agents should not own privileged credentials.
+1. **Agents don't hold privileged credentials.** Secrets stay out of the model context.
+2. **Every action is governed** by identity, policy, context, and approval.
+3. **Capabilities are composable** through standard interfaces, not one-off integrations.
+4. **The runtime is portable.** Run it locally, on your own infrastructure, or on Saturn Cloud.
+5. **Execution is observable**, with traceable records and deterministic authorization.
+6. **Humans stay in control** of high-impact actions.
 
-Secrets and privileged credentials should remain outside the model context whenever possible.
+---
 
-### Every action should be governed.
+## Research
 
-Agent access should be scoped by identity, policy, context, and approval requirements.
+Saturn is growing into an independent AI lab. Alongside the infrastructure, we work on:
 
-### Capabilities should be composable.
-
-Enterprise capabilities should be exposed through standardized interfaces rather than bespoke Agent integrations.
-
-### Runtime should remain portable.
-
-Organizations should be able to run Saturn locally, in their own infrastructure, or through Saturn Cloud.
-
-### Execution should be observable.
-
-Agent actions should produce traceable execution records and deterministic authorization decisions.
-
-### Human control remains fundamental.
-
-High-impact or sensitive operations can require explicit human approval before execution.
-
-### Open infrastructure should remain auditable.
-
-Core runtime infrastructure should be independently inspectable and deployable without requiring Saturn Cloud.
+- **Interpretability**: activation-steering experiments on small open models
+- **Papers**: publishing what we learn, including negative results
+- **Models**: training our own models and releasing the weights
 
 ---
 
 ## Open Source
 
-Saturn Technology Project develops selected infrastructure components openly.
+Core infrastructure, including the runtime, is developed in the open so it can be inspected and deployed without Saturn Cloud. Commercial offerings focus on managed infrastructure, centralized governance, and enterprise security.
 
-The Runtime is designed to be portable, independently auditable, and deployable outside Saturn Cloud.
+## Support Saturn
 
-Commercial capabilities may include centralized management, governance, enterprise security, managed infrastructure, and other control-plane services.
-
-The goal is not to build another Agent.
-
-> **The goal is to build the infrastructure that makes Agents usable inside real organizations.**
+Saturn is independent and self-funded. If this work matters to you, [sponsoring us on GitHub](https://github.com/sponsors/Saturn-Technology-Project) directly funds compute for research, infrastructure costs, and time spent maintaining the open-source projects.
 
 ---
 
-## Connect
+<div align="center">
 
-**Website · Documentation · GitHub**
+**AI agents are becoming a new class of software worker.<br>Saturn builds the infrastructure they need to operate safely.**
 
----
+[saturn-core.com](https://saturn-core.com)
 
-AI Agents are becoming a new class of software worker.
-
-**Saturn is building the infrastructure they need to run, connect, act, and operate safely.**
+</div>
