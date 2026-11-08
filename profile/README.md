@@ -95,6 +95,6 @@ Contributions are welcome too: star the repository, open an issue, or send a pul
 
 **AI you can control, and understand.**
 
-© 2026 Saturn Project by Rick Weng
+© 2026 Saturn Technology Project by Rick Weng
 
 </div>
