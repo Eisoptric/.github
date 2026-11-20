@@ -42,4 +42,4 @@ Small language models we train from scratch, to be released with every checkpoin
 
 ## Contact
 
-General and collaboration: hello@saturn-core.com · Security: security@saturn-core.com
+General and collaboration: hello@eisoptric.com · Security: security@eisoptric.com
