@@ -37,7 +37,7 @@ Small language models we train from scratch, to be released with every checkpoin
 
 | Tool | What it is | |
 | --- | --- | --- |
-| [**Eisoptric App**](https://github.com/Saturn-Technology-Project/Saturn-App) | The open-source workbench we use for experiments and interpretability: questions, code, every sample and the model's insides, kept together. Apache 2.0. | [Releases](https://github.com/Saturn-Technology-Project/Saturn-App/releases) · [Page](https://saturn-core.com/app) |
+| [**Eisoptric Workbench**](https://github.com/Eisoptric/Workbench) | The open-source workbench we use for experiments and interpretability: questions, code, every sample and the model's insides, kept together. Apache 2.0. | [Releases](https://github.com/Eisoptric/Workbench/releases) · [Page](https://saturn-core.com/app) |
 | **Eisoptric MCP** | The gateway we needed before letting agents act on their own: every tool call under policy, approval and audit. Free. | [Page](https://saturn-core.com/mcp) · [Console](https://dashboard.saturn-core.com) |
 
 ## Contact
